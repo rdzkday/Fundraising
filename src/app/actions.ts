@@ -278,6 +278,52 @@ export async function importMutations(source: string, rows: IncomingTx[]) {
 
 export async function setMutationCategory(id: string, category: MutationCategory) {
   await requireAdmin();
+  const m = await one("mutations", "id", id);
   await update("mutations", id, { category });
+  // Donasi yang dibuat dari mutasi (kode unik 0) ikut dibatalkan bila mutasinya ternyata bukan donasi.
+  if (m?.donation_id && category !== "donasi") {
+    const d = await one("donations", "id", m.donation_id);
+    if (d && d.unique_code === 0 && d.verified_via === "mutasi") {
+      await update("donations", d.id, { status: "ditolak", mutation_id: null });
+      await update("mutations", id, { donation_id: null });
+    }
+  }
+  refresh();
+}
+
+/**
+ * Uang masuk tanpa donasi dari form (transfer langsung, data lama) dicatat sebagai donasi terverifikasi.
+ * Kode unik 0 menandai donasi yang lahir dari mutasi.
+ */
+async function recordDonation(m: Mutation, campaignId: string) {
+  if (m.credit <= 0 || m.donation_id) return false;
+  const at = new Date(m.date + "T12:00:00+07:00").toISOString();
+  const id = crypto.randomUUID();
+  await insert("donations", {
+    id, ticket: newTicket(), campaign_id: campaignId, name: "Hamba Allah", contact: "", message: "",
+    base_amount: m.credit, unique_code: 0, total: m.credit, status: "terverifikasi",
+    proof_path: null, verified_at: at, verified_via: "mutasi", mutation_id: m.id, priority: 0,
+    created_at: at, expires_at: at,
+  });
+  await update("mutations", m.id, { donation_id: id, category: "donasi" });
+  return true;
+}
+
+export async function mutationToDonation(id: string, f: FormData) {
+  await requireAdmin();
+  const [m, campaign] = await Promise.all([one("mutations", "id", id), one("campaigns", "id", str(f, "campaign_id"))]);
+  if (!m || !campaign) return;
+  await recordDonation(m, campaign.id);
+  refresh();
+}
+
+/** Semua uang masuk berkategori Donasi yang belum tercatat, sekaligus ke satu campaign. */
+export async function categorizedMutationsToDonations(f: FormData) {
+  await requireAdmin();
+  const campaign = await one("campaigns", "id", str(f, "campaign_id"));
+  if (!campaign) return;
+  for (const m of await all("mutations")) {
+    if (m.category === "donasi") await recordDonation(m, campaign.id);
+  }
   refresh();
 }

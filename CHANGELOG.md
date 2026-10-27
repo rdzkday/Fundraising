@@ -1,5 +1,17 @@
 # Catatan perubahan
 
+## 2026-10-28 — Mutasi masuk bisa dicatat sebagai donasi
+
+Penyebab: uang masuk dari mutasi hanya menjadi donasi bila cocok dengan donasi dari form web yang masih menunggu, dengan nominal persis sama. Transfer langsung dan data lama (mis. statement Agustus, sebelum ada donasi di web) tidak pernah menjadi data donasi. Mengubah kategori ke "Donasi" pun hanya mengganti label.
+
+### Admin › Mutasi › Kategori transaksi
+
+- **Kolom baru "Data donasi".** Tiap uang masuk yang belum tercatat punya pilihan campaign dan tombol **Jadikan donasi**. Hasilnya donasi terverifikasi atas nama Hamba Allah, bertanggal sesuai mutasi, dan langsung ikut ringkasan, dashboard, serta alokasi penyaluran. Uang masuk yang sudah tercatat menampilkan nomor tiketnya.
+- **Catat sekaligus.** Jika ada uang masuk berkategori Donasi yang belum tercatat, muncul form untuk mencatat semuanya ke satu campaign.
+- **Bisa dibatalkan.** Mengubah kategori mutasi dari Donasi ke kategori lain menandai donasi hasil mutasi itu sebagai Ditolak dan melepas tautannya. Donasi dari form web tidak ikut berubah.
+- Pilihan kategori kini langsung ikut berubah setelah "Jadikan donasi".
+- Tidak perlu migrasi database. Donasi hasil mutasi ditandai dengan kode unik 0.
+
 ## 2026-10-28 — Admin › Mutasi: keterangan asli disamarkan
 
 - Kolom **Keterangan asli (lokal)** di pratinjau impor kini tersamar secara bawaan: kata di whitelist tetap utuh, kata lain hanya menyisakan huruf pertama (`MUHAMAD` → `M••••••`, nomor rekening → `0•••••••••••`). Nama dan nomor rekening tidak terbaca saat layar terlihat orang lain atau dibagikan.
