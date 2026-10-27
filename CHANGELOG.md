@@ -1,5 +1,10 @@
 # Catatan perubahan
 
+## 2026-10-28 — Admin › Mutasi: keterangan asli disamarkan
+
+- Kolom **Keterangan asli (lokal)** di pratinjau impor kini tersamar secara bawaan: kata di whitelist tetap utuh, kata lain hanya menyisakan huruf pertama (`MUHAMAD` → `M••••••`, nomor rekening → `0•••••••••••`). Nama dan nomor rekening tidak terbaca saat layar terlihat orang lain atau dibagikan.
+- Tombol **Tampilkan / Samarkan** di judul kolom membuka keterangan lengkap sementara untuk memeriksa sensor. Setiap PDF baru kembali tersamar.
+
 ## 2026-10-28 — Perbaikan: error saat mengunggah mutasi CIMB Niaga
 
 Penyebab: kolom `credit`, `debit`, dan `balance` di tabel `mutations` bertipe `bigint`, sedangkan statement CIMB Niaga mencantumkan sen (`4,919,083.99`). Supabase menolak simpan dan halaman menampilkan "An error occurred in the Server Components render".

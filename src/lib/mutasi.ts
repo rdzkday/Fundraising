@@ -89,6 +89,12 @@ export function censor(raw: string, whitelist: string[]) {
   return out.join(" ");
 }
 
+/** Untuk pratinjau admin: kata whitelist tetap utuh, kata lain hanya huruf pertamanya (MUHAMAD -> M••••••). */
+export function maskRaw(raw: string, whitelist: string[]) {
+  const wl = new Set(whitelist.map((w) => w.toUpperCase()));
+  return raw.replace(/[A-Za-z0-9]+/g, (tok) => (wl.has(tok.toUpperCase()) ? tok : tok[0] + "•".repeat(tok.length - 1)));
+}
+
 export function guessCategory(raw: string, credit: number) {
   const u = raw.toUpperCase();
   if (/\b(ADM|BIAYA|PAJAK|BUNGA)\b/.test(u)) return "biaya_bank" as const;

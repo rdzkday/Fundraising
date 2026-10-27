@@ -4,7 +4,7 @@ import { useState } from "react";
 import { importMutations, type IncomingTx } from "@/app/actions";
 import { Notice } from "@/components/ui";
 import { rp } from "@/lib/format";
-import { censor, guessCategory, parseLines, type ParsedTx } from "@/lib/mutasi";
+import { censor, guessCategory, maskRaw, parseLines, type ParsedTx } from "@/lib/mutasi";
 
 /** Membaca PDF di browser: baris disusun ulang dari posisi teks di halaman. */
 async function pdfLines(file: File) {
@@ -31,6 +31,7 @@ export function PdfImporter({ whitelist }: { whitelist: string[] }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string>("");
+  const [showRaw, setShowRaw] = useState(false);
 
   async function onFile(file?: File) {
     setError(""); setResult(""); setTxs([]);
@@ -82,12 +83,17 @@ export function PdfImporter({ whitelist }: { whitelist: string[] }) {
           </p>
           <div className="max-h-[420px] overflow-auto rounded-2xl border border-line">
             <table className="tbl min-w-[760px]">
-              <thead className="sticky top-0 bg-white"><tr><th>Tanggal</th><th>Keterangan asli (lokal)</th><th>Tampil publik</th><th>Masuk</th><th>Keluar</th></tr></thead>
+              <thead className="sticky top-0 bg-white"><tr><th>Tanggal</th><th>
+                  Keterangan asli (lokal){" "}
+                  <button type="button" className="ml-1 text-xs font-normal text-brand underline" onClick={() => setShowRaw((v) => !v)}>
+                    {showRaw ? "Samarkan" : "Tampilkan"}
+                  </button>
+                </th><th>Tampil publik</th><th>Masuk</th><th>Keluar</th></tr></thead>
               <tbody>
                 {txs.map((t, i) => (
                   <tr key={i}>
                     <td className="whitespace-nowrap">{t.date}</td>
-                    <td className="text-xs text-muted">{t.raw}</td>
+                    <td className="text-xs text-muted">{showRaw ? t.raw : maskRaw(t.raw, whitelist)}</td>
                     <td className="font-mono text-xs">{censor(t.raw, whitelist)}</td>
                     <td className="whitespace-nowrap">{t.credit ? rp(t.credit) : ""}</td>
                     <td className="whitespace-nowrap">{t.debit ? rp(t.debit) : ""}</td>
