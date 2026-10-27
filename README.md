@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# dibersamai.id
 
-## Getting Started
+Crowdfunding pemulihan fisik dan mental korban bencana, dengan tiket untuk melacak setiap donasi: diterima, terverifikasi, tersalurkan, dan buktinya.
 
-First, run the development server:
+## Menjalankan di laptop
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka http://localhost:3000. Tanpa kunci Supabase, app berjalan dalam **mode demo**: data contoh di memori, hilang saat server dimatikan.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Admin: http://localhost:3000/admin, kata sandi demo `admin`
+- Tiket contoh yang sudah tersalurkan: `DB-DEMO01`; yang masih menunggu transfer: `DB-DEMO02`
+- PDF mutasi contoh untuk uji unggah: `public/contoh/mutasi-contoh.pdf`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Menyambungkan Supabase
 
-## Learn More
+1. Buat project di supabase.com.
+2. SQL Editor: jalankan `supabase/schema.sql`, lalu `supabase/campaigns.sql` (4 campaign contoh, tanpa donasi palsu).
+3. Salin `.env.example` jadi `.env.local`, isi `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `ADMIN_SECRET`.
+4. Jalankan ulang `npm run dev`. Banner mode demo hilang.
 
-To learn more about Next.js, take a look at the following resources:
+Service role key hanya dipakai di server dan tidak pernah dikirim ke browser. Jangan commit `.env.local`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy ke Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Push repo ini ke GitHub, import di Vercel, lalu isi environment variables yang sama dengan `.env.local`.
+Mode demo di Vercel tidak cocok untuk dipakai sungguhan, karena tiap instance server punya memori sendiri.
 
-## Deploy on Vercel
+## Cara kerja
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Kode unik**: nominal + 3 digit acak (1-999) yang belum dipakai donasi aktif lain dengan nominal sama. Berlaku 24 jam.
+- **Verifikasi**: admin mengunggah PDF mutasi. PDF dibaca dan disensor di browser admin (`src/lib/mutasi.ts`); server hanya menerima keterangan tersensor dan nominal. Uang masuk yang nominalnya persis sama dengan donasi yang menunggu langsung memverifikasinya. Donatur juga bisa unggah bukti transfer (privat, hanya admin) untuk diperiksa manual.
+- **Penyaluran**: dibagi ke donasi terverifikasi secara urut masuk (FIFO). Admin bisa menaikkan prioritas donasi tertentu (`allocate` di `src/lib/logic.ts`).
+- **Operasional**: tiap campaign punya persen batas atas (diatur admin). Dashboard menampilkan anggaran, yang terpakai, dan sisanya.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Batasan yang diketahui
+
+- Parser mutasi baru mengenali baris `tanggal keterangan nominal [DB/CR] saldo`. Format bank asli perlu dicek dan disesuaikan.
+- Dua donasi dengan total persis sama dalam 24 jam tidak mungkin terjadi (kode unik dijaga), tapi transfer yang nominalnya keliru tidak akan cocok otomatis.
+- Login admin memakai satu kata sandi bersama. Untuk banyak admin, ganti ke Supabase Auth.
+- Aturan hukum pengumpulan uang/barang (izin PUB) belum dicek.
