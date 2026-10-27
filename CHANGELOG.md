@@ -1,5 +1,15 @@
 # Catatan perubahan
 
+## 2026-10-28 — Parser mutasi: dukung CIMB Niaga
+
+### Admin › Mutasi
+
+- **PDF statement CIMB Niaga (OCTO) kini terbaca.** Sebelumnya muncul "Tidak ada transaksi yang dikenali". Diuji dengan statement Agustus 2026: 37 transaksi terbaca, total kredit/debit sama persis dengan ringkasan statement, saldo berantai tanpa selisih.
+- Tanggal dengan nama bulan (`01 Aug 2026`, `1 Agustus 2026`, singkatan Indonesia seperti `Agu`, `Okt`, `Des`) kini dikenali.
+- Jumlah bertanda minus (`-500,000.00`) dibaca sebagai debit.
+- Baris ringkasan di akhir statement (Saldo Awal/Akhir, Total Debit/Kredit, IMPORTANT!) dan baris jam (`08:39:06`) tidak lagi ikut tersambung ke keterangan transaksi.
+- Format lama (`DD/MM/YYYY ... DB/CR saldo`) tetap didukung.
+
 ## 2026-10-28 — Revisi halaman Penyaluran
 
 ### Wajib sebelum deploy

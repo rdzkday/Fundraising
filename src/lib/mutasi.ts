@@ -4,10 +4,19 @@
 export type ParsedTx = { date: string; raw: string; debit: number; credit: number; balance: number };
 
 const NUM = String.raw`\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?`;
+// Tanggal: 01/08/2026, 01-08-26, atau 01 Aug 2026 / 1 Agustus 2026 (CIMB Niaga, Mandiri, dll).
+const DATE = String.raw`\d{2}[/-]\d{2}[/-]\d{2,4}|\d{1,2}\s+[A-Za-z]{3,9}\.?\s+\d{4}`;
+// Jumlah bisa bertanda minus (debit) seperti di CIMB Niaga: -500,000.00
 const LINE = new RegExp(
-  String.raw`^(\d{2}[/-]\d{2}[/-]\d{2,4})\s+(.*?)\s+(${NUM})\s*(DB|CR|DR|D|K)?\s+(${NUM})\s*$`,
+  String.raw`^(${DATE})\s+(.*?)\s+(-?)(${NUM})\s*(DB|CR|DR|D|K)?\s+(${NUM})\s*$`,
   "i",
 );
+// Ringkasan/penutup di akhir laporan: setelah ini baris tidak lagi disambung ke keterangan.
+const FOOTER = /^(saldo\s+(awal|akhir)|total\s+(debit|kredit)|opening\s+balance|closing\s+balance|important\b)/i;
+const MONTHS: Record<string, string> = {
+  jan: "01", feb: "02", mar: "03", apr: "04", may: "05", mei: "05", jun: "06", jul: "07",
+  aug: "08", agu: "08", agt: "08", sep: "09", oct: "10", okt: "10", nov: "11", dec: "12", des: "12",
+};
 const ACCOUNT = /(?:no\.?\s*rek(?:ening)?|account\s*(?:no\.?|number))\s*:?\s*([\d\- ]{6,})/i;
 
 export function parseAmount(s: string) {
@@ -19,7 +28,13 @@ export function parseAmount(s: string) {
 }
 
 function parseDate(s: string) {
-  const [d, m, y] = s.split(/[/-]/);
+  let [d, m, y] = s.split(/[/-]/);
+  if (!m) {
+    [d, m, y] = s.split(/\s+/);
+    m = MONTHS[m.slice(0, 3).toLowerCase()];
+    if (!m) return null;
+  }
+  d = d.padStart(2, "0");
   const year = y.length === 2 ? "20" + y : y;
   const iso = `${year}-${m}-${d}`;
   return isNaN(new Date(iso).getTime()) ? null : iso;
@@ -33,6 +48,7 @@ export const maskAccount = (n: string) => {
 export function parseLines(lines: string[]) {
   let account = "****";
   let prev: number | null = null;
+  let closed = false;
   const txs: ParsedTx[] = [];
   for (const raw of lines) {
     const line = raw.trim();
@@ -45,13 +61,17 @@ export function parseLines(lines: string[]) {
     const m = line.match(LINE);
     const date = m && parseDate(m[1]);
     if (m && date) {
-      const amt = parseAmount(m[3]);
-      const bal = parseAmount(m[5]);
-      const flag = (m[4] ?? "").toUpperCase();
-      const credit = ["CR", "K"].includes(flag) ? true : ["DB", "DR", "D"].includes(flag) ? false : prev === null ? true : bal >= prev;
+      const amt = parseAmount(m[4]);
+      const bal = parseAmount(m[6]);
+      const flag = (m[5] ?? "").toUpperCase();
+      const credit = m[3] === "-" ? false
+        : ["CR", "K"].includes(flag) ? true : ["DB", "DR", "D"].includes(flag) ? false : prev === null ? true : bal >= prev;
       txs.push({ date, raw: m[2].trim(), debit: credit ? 0 : amt, credit: credit ? amt : 0, balance: bal });
       prev = bal;
-    } else if (txs.length && !/^(halaman|page|saldo|tanggal|date)\b/i.test(line)) {
+      closed = false;
+    } else if (FOOTER.test(line)) {
+      closed = true;
+    } else if (txs.length && !closed && !/^(halaman|page|saldo|tanggal|date)\b/i.test(line) && !/^\d{2}:\d{2}(:\d{2})?$/.test(line)) {
       txs[txs.length - 1].raw += " " + line; // baris lanjutan keterangan
     }
   }
