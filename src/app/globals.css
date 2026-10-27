@@ -29,6 +29,23 @@ h3 {
   text-wrap: balance;
 }
 
+::selection {
+  background: var(--color-lime);
+  color: var(--color-brand);
+}
+
+:where(a, button, summary):focus-visible {
+  outline: 2px solid var(--color-brand-2);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-brand);
+}
+
+/* Komponen di layer `components` supaya utility (pl-11, py-4, text-sm, ...) tetap bisa menimpanya. */
+@layer components {
 .btn {
   @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand px-6 py-3 font-bold text-lime transition hover:bg-brand-2 disabled:opacity-60;
 }
@@ -55,4 +72,5 @@ h3 {
 }
 .tbl td {
   @apply border-b border-line px-3 py-2.5 align-top;
+}
 }

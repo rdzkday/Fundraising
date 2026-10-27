@@ -37,16 +37,16 @@ export function DonateForm({ campaigns, initial }: { campaigns: Opt[]; initial?:
               key={p}
               type="button"
               onClick={() => { setAmount(p); setCustom(""); }}
-              className={`rounded-xl border px-3 py-3 font-bold transition ${!custom && amount === p ? "border-brand bg-lime-2 text-brand" : "border-line hover:border-ink/40"}`}
+              className={`rounded-xl border px-3 py-3 font-bold tabular-nums transition ${!custom && amount === p ? "border-brand bg-lime-2 text-brand" : "border-line hover:border-ink/40"}`}
             >
               {rp(p)}
             </button>
           ))}
         </div>
         <div className="relative mt-3">
-          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-bold text-muted">Rp</span>
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-muted">Rp</span>
           <input
-            className="input pl-11 text-lg font-bold"
+            className={`input pl-12 text-lg font-bold tabular-nums placeholder:font-semibold ${custom ? "border-brand ring-2 ring-lime" : ""}`}
             inputMode="numeric"
             placeholder="Nominal lain"
             value={custom ? Number(custom.replace(/\D/g, "")).toLocaleString("id-ID") : ""}
@@ -55,7 +55,7 @@ export function DonateForm({ campaigns, initial }: { campaigns: Opt[]; initial?:
           />
         </div>
         <input type="hidden" name="amount" value={value || 0} />
-        <p className="mt-2 text-sm text-muted">
+        <p className="mt-3 max-w-prose rounded-xl bg-mist px-4 py-3 text-sm leading-relaxed text-muted">
           Setelah klik Donate, sistem menambahkan <b>kode unik 3 digit</b> (mis. {rp(value + 123)}). Kode ini dipakai untuk mencocokkan
           transferanmu dan ikut dihitung sebagai donasi. {ops}% dialokasikan untuk promosi & operasional, dan pemakaiannya ditampilkan terbuka di dashboard.
         </p>
@@ -66,7 +66,7 @@ export function DonateForm({ campaigns, initial }: { campaigns: Opt[]; initial?:
           <label className="label" htmlFor="name">Nama</label>
           <input id="name" name="name" className="input" placeholder="Nama yang ditampilkan" disabled={anon} maxLength={60} />
           <label className="mt-2 flex items-center gap-2 text-sm">
-            <input type="checkbox" name="anonymous" checked={anon} onChange={(e) => setAnon(e.target.checked)} /> Sembunyikan nama (Hamba Allah)
+            <input type="checkbox" className="size-4" name="anonymous" checked={anon} onChange={(e) => setAnon(e.target.checked)} /> Sembunyikan nama (Hamba Allah)
           </label>
         </div>
         <div>
