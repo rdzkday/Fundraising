@@ -19,7 +19,7 @@ Buka http://localhost:3000. Tanpa kunci Supabase, app berjalan dalam **mode demo
 
 1. Buat project di supabase.com.
 2. SQL Editor: jalankan `supabase/schema.sql`, lalu `supabase/campaigns.sql` (4 campaign contoh, tanpa donasi palsu).
-3. Salin `.env.example` jadi `.env.local`, isi `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `ADMIN_SECRET`.
+3. Salin `.env.example` jadi `.env.local`, isi `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, `ADMIN_SECRET`.
 4. Jalankan ulang `npm run dev`. Banner mode demo hilang.
 
 Service role key hanya dipakai di server dan tidak pernah dikirim ke browser. Jangan commit `.env.local`.

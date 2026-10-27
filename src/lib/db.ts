@@ -5,7 +5,8 @@ import type { Tables } from "./types";
 
 type Name = keyof Tables;
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+// Hanya dipakai di server. NEXT_PUBLIC_SUPABASE_URL tetap diterima untuk konfigurasi lama.
+const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 export const isDemo = !(url && serviceKey);
 
