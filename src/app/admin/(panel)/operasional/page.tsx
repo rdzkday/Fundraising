@@ -11,10 +11,11 @@ export default async function AdminOperasional() {
   return (
     <div>
       <h1 className="text-3xl font-extrabold">Promosi & operasional</h1>
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Stat label="Anggaran (persen per donasi)" value={rp(summary.opsBudget)} />
-        <Stat label="Terpakai" value={rp(summary.opsUsed)} />
-        <Stat label="Sisa" value={rp(summary.opsBudget - summary.opsUsed)} dark />
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Anggaran (persen per donasi)" value={rp(summary.total.budget)} />
+        <Stat label="Promosi terpakai" value={rp(summary.total.promosi)} />
+        <Stat label="Operasional terpakai" value={rp(summary.total.operasional)} />
+        <Stat label="Sisa anggaran" value={rp(summary.total.budget - summary.total.promosi - summary.total.operasional)} dark />
       </div>
       <ActionForm action={addExpense} className="card mt-6 grid gap-4 p-6 sm:grid-cols-2">
         <div>

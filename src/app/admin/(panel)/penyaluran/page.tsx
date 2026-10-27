@@ -18,7 +18,7 @@ export default async function AdminPenyaluran() {
           <select id="d-c" name="campaign_id" className="input" required>
             {active.map((c) => {
               const s = summary.per.get(c.id)!;
-              return <option key={c.id} value={c.id}>{c.title} (tersimpan {rp(s.raised - s.ops - s.disbursed)})</option>;
+              return <option key={c.id} value={c.id}>{c.title} (tersimpan {rp(s.tersimpan)})</option>;
             })}
           </select>
         </div>

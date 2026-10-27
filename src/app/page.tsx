@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CampaignCard, Section, Stat } from "@/components/ui";
-import { rp } from "@/lib/format";
+import { CampaignCard, FlowStats, Section } from "@/components/ui";
 import { loadAll } from "@/lib/logic";
 
 const HERO = [
@@ -120,12 +119,7 @@ export default async function Home() {
       </Section>
 
       <Section title="Uangnya ada di mana sekarang?" kicker="Terbuka untuk semua">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Donasi masuk" value={rp(summary.masuk)} note={`${summary.donors} donasi terverifikasi`} dark />
-          <Stat label="Tersimpan" value={rp(summary.tersimpan)} note="Siap disalurkan" />
-          <Stat label="Tersalurkan" value={rp(summary.tersalurkan)} note="Lengkap dengan bukti" />
-          <Stat label="Promosi & operasional" value={rp(summary.opsUsed)} note={`Terpakai dari anggaran ${rp(summary.opsBudget)}`} />
-        </div>
+        <FlowStats f={summary.total} />
         <Link href="/dashboard" className="mt-6 inline-block font-bold text-brand-2 underline underline-offset-4">
           Lihat dashboard lengkap
         </Link>

@@ -83,36 +83,42 @@ export function allocate(campaign: Campaign, donations: Donation[], disbursement
   return result;
 }
 
-export type CampaignStats = { raised: number; donors: number; disbursed: number; ops: number };
+/** Arus kas satu project, atau seluruh dibersamai.id. Promosi dan operasional dicatat terpisah. */
+export type Flow = {
+  masuk: number;
+  donors: number;
+  tersalurkan: number;
+  promosi: number;
+  operasional: number;
+  /** Batas atas promosi + operasional dari persen per donasi. */
+  budget: number;
+  tersimpan: number;
+};
+
+const emptyFlow = (): Flow => ({ masuk: 0, donors: 0, tersalurkan: 0, promosi: 0, operasional: 0, budget: 0, tersimpan: 0 });
 
 export function summarize(campaigns: Campaign[], donations: Donation[], disbursements: Disbursement[], expenses: Expense[]) {
   const byId = new Map(campaigns.map((c) => [c.id, c]));
-  const verified = donations.filter((d) => d.status === "terverifikasi");
-  const per = new Map<string, CampaignStats>(campaigns.map((c) => [c.id, { raised: 0, donors: 0, disbursed: 0, ops: 0 }]));
-  for (const d of verified) {
-    const s = per.get(d.campaign_id);
-    if (!s) continue;
-    s.raised += d.total;
-    s.donors += 1;
-    s.ops += opsShare(d, byId.get(d.campaign_id));
+  const per = new Map<string, Flow>(campaigns.map((c) => [c.id, emptyFlow()]));
+  const total = emptyFlow();
+  for (const d of donations.filter((x) => x.status === "terverifikasi")) {
+    const budget = opsShare(d, byId.get(d.campaign_id));
+    for (const f of [per.get(d.campaign_id), total]) {
+      if (!f) continue;
+      f.masuk += d.total;
+      f.donors += 1;
+      f.budget += budget;
+    }
   }
   for (const x of disbursements) {
-    const s = per.get(x.campaign_id);
-    if (s) s.disbursed += x.amount;
+    for (const f of [per.get(x.campaign_id), total]) if (f) f.tersalurkan += x.amount;
   }
-  const masuk = verified.reduce((a, d) => a + d.total, 0);
-  const tersalurkan = disbursements.reduce((a, d) => a + d.amount, 0);
-  const opsBudget = [...per.values()].reduce((a, s) => a + s.ops, 0);
-  const opsUsed = expenses.reduce((a, e) => a + e.amount, 0);
-  return {
-    masuk,
-    tersalurkan,
-    opsBudget,
-    opsUsed,
-    tersimpan: masuk - tersalurkan - opsUsed,
-    donors: verified.length,
-    per,
-  };
+  // Biaya tanpa project (umum) hanya masuk ke total keseluruhan.
+  for (const e of expenses) {
+    for (const f of [e.campaign_id ? per.get(e.campaign_id) : undefined, total]) if (f) f[e.kind] += e.amount;
+  }
+  for (const f of [...per.values(), total]) f.tersimpan = f.masuk - f.tersalurkan - f.promosi - f.operasional;
+  return { total, per };
 }
 
 export async function loadAll() {

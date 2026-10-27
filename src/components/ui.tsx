@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { rp, pct } from "@/lib/format";
-import type { CampaignStats } from "@/lib/logic";
+import type { Flow } from "@/lib/logic";
 import type { Campaign } from "@/lib/types";
 
 export function Progress({ value, max }: { value: number; max: number }) {
@@ -12,8 +12,8 @@ export function Progress({ value, max }: { value: number; max: number }) {
   );
 }
 
-export function CampaignCard({ c, s }: { c: Campaign; s?: CampaignStats }) {
-  const raised = s?.raised ?? 0;
+export function CampaignCard({ c, s }: { c: Campaign; s?: Flow }) {
+  const raised = s?.masuk ?? 0;
   return (
     <Link href={`/project/${c.slug}`} className="group flex flex-col">
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl">
@@ -28,7 +28,7 @@ export function CampaignCard({ c, s }: { c: Campaign; s?: CampaignStats }) {
           <p className="mt-2 text-sm">
             <b>{rp(raised)}</b> <span className="text-muted">terkumpul dari {rp(c.target)}</span>
           </p>
-          <p className="text-xs text-muted">{s?.donors ?? 0} donatur · {rp(s?.disbursed ?? 0)} sudah tersalurkan</p>
+          <p className="text-xs text-muted">{s?.donors ?? 0} donatur · {rp(s?.tersalurkan ?? 0)} sudah tersalurkan</p>
         </div>
       </div>
     </Link>
@@ -39,8 +39,22 @@ export function Stat({ label, value, note, dark }: { label: string; value: strin
   return (
     <div className={`rounded-2xl p-5 ${dark ? "bg-brand text-white" : "bg-mist"}`}>
       <p className={`text-sm font-semibold ${dark ? "text-lime" : "text-muted"}`}>{label}</p>
-      <p className="mt-1 text-2xl font-extrabold tracking-tight md:text-3xl">{value}</p>
+      <p className="mt-1 text-2xl font-extrabold tracking-tight">{value}</p>
       {note && <p className={`mt-1 text-xs ${dark ? "text-white/70" : "text-muted"}`}>{note}</p>}
+    </div>
+  );
+}
+
+/** Lima angka utama: masuk, tersimpan, tersalurkan, promosi, operasional. */
+export function FlowStats({ f }: { f: Flow }) {
+  const left = f.budget - f.promosi - f.operasional;
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <Stat label="Uang masuk" value={rp(f.masuk)} note={`${f.donors} donasi terverifikasi`} dark />
+      <Stat label="Tersimpan" value={rp(f.tersimpan)} note="Siap disalurkan" />
+      <Stat label="Tersalurkan" value={rp(f.tersalurkan)} note={`${pct(f.tersalurkan, f.masuk)}% dari uang masuk`} />
+      <Stat label="Promosi" value={rp(f.promosi)} note="Iklan dan materi kampanye" />
+      <Stat label="Operasional" value={rp(f.operasional)} note={`Sisa anggaran promosi + operasional ${rp(left)}`} />
     </div>
   );
 }

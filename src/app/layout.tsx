@@ -18,6 +18,7 @@ const NAV = [
   ["/project", "Project"],
   ["/pendanaan", "Pendanaan"],
   ["/tiket", "Cek Tiket"],
+  ["/tentang", "Tentang Kami"],
 ];
 
 function Logo() {
@@ -44,7 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <header className="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
             <Logo />
-            <nav className="hidden items-center gap-1 md:flex">
+            <nav className="hidden items-center gap-1 lg:flex">
               {NAV.map(([href, label]) => (
                 <Link key={href} href={href} className="rounded-full px-4 py-2 text-sm font-semibold hover:bg-mist">
                   {label}
@@ -55,7 +56,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/donasi" className="btn px-5 py-2.5 text-sm">
                 Donate
               </Link>
-              <details className="relative md:hidden">
+              <details className="relative lg:hidden">
                 <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-line" aria-label="Menu">
                   <svg viewBox="0 0 20 20" className="h-5 w-5"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
                 </summary>
@@ -83,13 +84,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 {NAV.map(([href, label]) => (
                   <li key={href}><Link href={href} className="hover:text-ink">{label}</Link></li>
                 ))}
-                <li><Link href="/pendanaan#galang" className="hover:text-ink">Galang dana</Link></li>
               </ul>
             </div>
             <div className="text-sm text-muted">
-              <p className="font-bold text-ink">Privasi</p>
-              <p className="mt-2">Mutasi rekening disensor di perangkat admin sebelum diunggah. Nama dan nomor rekening tidak pernah tampil ke publik.</p>
-              <p className="mt-3 text-xs">Foto: Unsplash (Joanne Francis, Saikiran Kesari, Sebastian Schuster, Bagir Bahana, Hasny Photojournalist, Jeferson Argueta, Helena Lopes, Matt Palmer).</p>
+              <p className="font-bold text-ink">Untuk lembaga</p>
+              <ul className="mt-2 space-y-1">
+                <li><Link href="/pendanaan#galang" className="hover:text-ink">Ajukan campaign</Link></li>
+                <li><Link href="/tentang#audit" className="hover:text-ink">Kolaborasi audit eksternal</Link></li>
+              </ul>
             </div>
           </div>
         </footer>

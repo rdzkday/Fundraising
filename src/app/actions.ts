@@ -84,6 +84,16 @@ export async function proposeCampaign(_: unknown, f: FormData) {
   return { ok: "Pengajuan terkirim. Tim dibersamai.id akan menghubungi kontak yang Anda isi untuk verifikasi." };
 }
 
+export async function submitAudit(_: unknown, f: FormData) {
+  const name = str(f, "name", 100);
+  const organization = str(f, "organization", 120);
+  const contact = str(f, "contact", 100);
+  if (!name || !organization || !contact) return { error: "Nama, kantor/lembaga, dan kontak wajib diisi." };
+  await insert("inquiries", { id: crypto.randomUUID(), name, organization, contact, message: str(f, "message", 2000), created_at: now() });
+  refresh();
+  return { ok: "Terima kasih. Tim dibersamai.id akan menghubungi Anda untuk membahas kolaborasi audit." };
+}
+
 // ---------- admin ----------
 
 export async function adminLogin(_: unknown, f: FormData) {

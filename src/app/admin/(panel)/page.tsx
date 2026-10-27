@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { Stat } from "@/components/ui";
-import { isDemo } from "@/lib/db";
-import { rp } from "@/lib/format";
+import { FlowStats } from "@/components/ui";
+import { all, isDemo } from "@/lib/db";
+import { tgl } from "@/lib/format";
 import { loadAll, viewStatus } from "@/lib/logic";
 
 export default async function AdminHome() {
-  const { campaigns, donations, summary } = await loadAll();
+  const [{ campaigns, donations, summary }, inquiries] = await Promise.all([loadAll(), all("inquiries")]);
   const waiting = donations.filter((d) => viewStatus(d) === "menunggu_verifikasi").length;
   const pendingTransfer = donations.filter((d) => viewStatus(d) === "menunggu_transfer").length;
   const proposals = campaigns.filter((c) => c.status === "pengajuan").length;
@@ -17,12 +17,7 @@ export default async function AdminHome() {
           Mode demo: perubahan tersimpan di memori server dan hilang saat server dimatikan. Isi kunci Supabase di <code>.env.local</code> untuk menyimpan permanen.
         </p>
       )}
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Uang masuk" value={rp(summary.masuk)} dark />
-        <Stat label="Tersimpan" value={rp(summary.tersimpan)} />
-        <Stat label="Tersalurkan" value={rp(summary.tersalurkan)} />
-        <Stat label="Operasional terpakai" value={rp(summary.opsUsed)} note={`dari anggaran ${rp(summary.opsBudget)}`} />
-      </div>
+      <div className="mt-6"><FlowStats f={summary.total} /></div>
       <h2 className="mt-10 text-xl font-extrabold">Perlu tindakan</h2>
       <ul className="mt-4 grid gap-3 sm:grid-cols-3">
         {[
@@ -38,6 +33,21 @@ export default async function AdminHome() {
           </li>
         ))}
       </ul>
+
+      <h2 className="mt-10 text-xl font-extrabold">Pengajuan kolaborasi audit ({inquiries.length})</h2>
+      {inquiries.length === 0 ? (
+        <p className="mt-2 text-sm text-muted">Belum ada. Auditor bisa mengajukan lewat halaman Tentang Kami.</p>
+      ) : (
+        <ul className="mt-4 space-y-3">
+          {inquiries.sort((a, b) => b.created_at.localeCompare(a.created_at)).map((q) => (
+            <li key={q.id} className="card p-5">
+              <p className="font-bold">{q.name} · {q.organization}</p>
+              <p className="text-sm text-muted">{q.contact} · {tgl(q.created_at, true)}</p>
+              {q.message && <p className="mt-2 text-sm">{q.message}</p>}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

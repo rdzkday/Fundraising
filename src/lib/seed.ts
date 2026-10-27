@@ -1,5 +1,5 @@
 // Data contoh untuk mode demo. Semua nama, nominal, dan transaksi fiktif.
-import type { Campaign, Disbursement, Donation, Expense, Mutation, Setting, Upload } from "./types";
+import type { Campaign, Disbursement, Donation, Expense, Inquiry, Mutation, Setting, Upload } from "./types";
 
 const DAY = 86_400_000;
 const ago = (days: number, hour = 10) => {
@@ -145,8 +145,10 @@ export function seed() {
     { id: "s-4", campaign_id: "c-demonstrasi", date: day(2), purpose: "Sewa ruang dan konselor untuk sesi kelompok", amount: 700_000, evidence_path: null, created_at: ago(2) },
   ];
   const expenses: Expense[] = [
-    { id: "e-1", campaign_id: null, date: day(15), kind: "promosi", description: "Iklan media sosial kampanye bulan ini", amount: 250_000, created_at: ago(15) },
-    { id: "e-2", campaign_id: null, date: day(10), kind: "operasional", description: "Server dan domain dibersamai.id", amount: 150_000, created_at: ago(10) },
+    { id: "e-1", campaign_id: "c-banjir", date: day(15), kind: "promosi", description: "Iklan media sosial campaign banjir", amount: 150_000, created_at: ago(15) },
+    { id: "e-2", campaign_id: "c-gempa", date: day(12), kind: "promosi", description: "Desain poster dan iklan campaign gempa", amount: 100_000, created_at: ago(12) },
+    { id: "e-3", campaign_id: "c-karhutla", date: day(11), kind: "operasional", description: "Transport relawan survei lokasi", amount: 60_000, created_at: ago(11) },
+    { id: "e-4", campaign_id: null, date: day(10), kind: "operasional", description: "Server dan domain dibersamai.id (umum)", amount: 150_000, created_at: ago(10) },
   ];
 
   let bal = 2_000_000;
@@ -155,7 +157,9 @@ export function seed() {
     [6, "TRANSFER KE ███ PENYALURAN", 900_000, "penyaluran"],
     [4, "TRANSFER KE ███ PENYALURAN", 3_500_000, "penyaluran"],
     [2, "TRANSFER KE ███", 700_000, "penyaluran"],
-    [15, "PEMBAYARAN ███ IKLAN", 250_000, "operasional"],
+    [15, "PEMBAYARAN ███ IKLAN", 150_000, "operasional"],
+    [12, "PEMBAYARAN ███ IKLAN", 100_000, "operasional"],
+    [11, "TRANSFER KE ███", 60_000, "operasional"],
     [10, "PEMBAYARAN ███", 150_000, "operasional"],
     [1, "BIAYA ADM BULANAN", 15_000, "biaya_bank"],
   ];
@@ -174,5 +178,5 @@ export function seed() {
     { id: "default_ops_percent", value: "5" },
     { id: "whitelist", value: DEFAULT_WHITELIST },
   ];
-  return { campaigns, donations, disbursements, expenses, mutations, uploads, settings };
+  return { campaigns, donations, disbursements, expenses, mutations, uploads, settings, inquiries: [] as Inquiry[] };
 }

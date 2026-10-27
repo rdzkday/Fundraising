@@ -80,6 +80,16 @@ export type Upload = { id: string; source: string; uploaded_at: string; count: n
 
 export type Setting = { id: string; value: string };
 
+/** Pengajuan kolaborasi dari auditor eksternal (halaman Tentang Kami). */
+export type Inquiry = {
+  id: string;
+  name: string;
+  organization: string;
+  contact: string;
+  message: string;
+  created_at: string;
+};
+
 export type Settings = {
   bank_name: string;
   bank_account: string;
@@ -97,4 +107,5 @@ export type Tables = {
   mutations: Mutation;
   uploads: Upload;
   settings: Setting;
+  inquiries: Inquiry;
 };

@@ -87,6 +87,16 @@ create table if not exists settings (
   value text not null
 );
 
+create table if not exists inquiries (
+  id text primary key,
+  name text not null,
+  organization text not null,
+  contact text not null,
+  message text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table inquiries enable row level security;
 alter table campaigns enable row level security;
 alter table donations enable row level security;
 alter table disbursements enable row level security;
