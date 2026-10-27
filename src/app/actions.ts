@@ -242,10 +242,12 @@ export async function importMutations(source: string, rows: IncomingTx[]) {
   const upload_id = crypto.randomUUID();
   const list: Mutation[] = [];
   let matched = 0;
+  // Kolom rupiah bertipe bigint; sebagian bank (mis. CIMB Niaga) mencantumkan sen, jadi dibulatkan.
+  const rupiah = (v: unknown) => Math.round(Number(v) || 0);
   for (const r of fresh) {
     const m: Mutation = {
       id: crypto.randomUUID(), upload_id, date: r.date, public_desc: String(r.public_desc).slice(0, 200),
-      credit: Number(r.credit) || 0, debit: Number(r.debit) || 0, balance: Number(r.balance) || 0,
+      credit: rupiah(r.credit), debit: rupiah(r.debit), balance: rupiah(r.balance),
       category: r.category, dedupe_key: String(r.dedupe_key).slice(0, 200), donation_id: null,
     };
     if (m.credit > 0) {
@@ -259,13 +261,16 @@ export async function importMutations(source: string, rows: IncomingTx[]) {
         m.donation_id = d.id;
         m.category = "donasi";
         d.status = "terverifikasi";
-        await update("donations", d.id, { status: "terverifikasi", verified_at: now(), verified_via: "mutasi", mutation_id: m.id });
         matched++;
       }
     }
     list.push(m);
   }
   if (list.length) await insert("mutations", list);
+  // Donasi baru ditandai setelah mutasinya tersimpan, supaya gagal simpan tidak meninggalkan donasi terverifikasi tanpa mutasi.
+  for (const m of list.filter((x) => x.donation_id)) {
+    await update("donations", m.donation_id!, { status: "terverifikasi", verified_at: now(), verified_via: "mutasi", mutation_id: m.id });
+  }
   await insert("uploads", { id: upload_id, source, uploaded_at: now(), count: list.length });
   refresh();
   return { added: list.length, skipped: rows.length - fresh.length, matched };

@@ -1,5 +1,12 @@
 # Catatan perubahan
 
+## 2026-10-28 — Perbaikan: error saat mengunggah mutasi CIMB Niaga
+
+Penyebab: kolom `credit`, `debit`, dan `balance` di tabel `mutations` bertipe `bigint`, sedangkan statement CIMB Niaga mencantumkan sen (`4,919,083.99`). Supabase menolak simpan dan halaman menampilkan "An error occurred in the Server Components render".
+
+- Nilai rupiah kini **dibulatkan ke rupiah terdekat** di server sebelum disimpan. Tidak perlu migrasi database.
+- Pencocokan donasi lewat nominal unik tidak terpengaruh karena nominal donasi selalu bulat.
+
 ## 2026-10-28 — Perbaikan: "Application error" saat menyimpan penyaluran
 
 Penyebab: Vercel menolak kiriman di atas 4,5 MB sebelum sampai ke aplikasi (HTTP 413). Beberapa foto langsung dari HP melewati batas itu, dan browser berhenti dengan "Application error: a client-side exception has occurred".
