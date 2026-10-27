@@ -1,5 +1,13 @@
 # Catatan perubahan
 
+## 2026-10-28 — Perbaikan: "Application error" saat menyimpan penyaluran
+
+Penyebab: Vercel menolak kiriman di atas 4,5 MB sebelum sampai ke aplikasi (HTTP 413). Beberapa foto langsung dari HP melewati batas itu, dan browser berhenti dengan "Application error: a client-side exception has occurred".
+
+- **Foto diperkecil otomatis** di browser sebelum diunggah (sisi terpanjang 1600 px, JPEG). Foto HP belasan MB jadi sekitar 0,5 MB. PDF tidak diubah.
+- **Batas total 4 MB sekali simpan** diperiksa sebelum mengirim. Jika lewat, muncul pesan jelas. Sisanya bisa diunggah lewat "Tambah bukti".
+- **Kegagalan simpan tampil sebagai pesan**, bukan halaman error. Termasuk pesan khusus jika migrasi kolom `evidence` belum dijalankan di Supabase.
+
 ## 2026-10-28 — Parser mutasi: dukung CIMB Niaga
 
 ### Admin › Mutasi

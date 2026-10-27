@@ -34,6 +34,31 @@ export function CopyButton({ text, label = "Salin" }: { text: string; label?: st
   );
 }
 
+/**
+ * Foto dari kamera HP bisa 3-5 MB, sedangkan Vercel menolak kiriman di atas 4,5 MB.
+ * Foto diperkecil ke sisi terpanjang 1600 px (JPEG) sebelum dikirim. PDF dibiarkan.
+ */
+async function shrinkImage(file: File, max = 1600): Promise<File> {
+  if (!/^image\/(png|jpe?g|webp)$/.test(file.type) || file.size < 400_000) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, max / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#fff"; // PNG transparan jadi latar putih di JPEG
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/jpeg", 0.82));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 type EvidenceRow = { id: number; preview: string | null; name: string };
 let rowId = 0;
 
@@ -58,9 +83,16 @@ export function EvidenceFields({ initial = 0 }: { initial?: number }) {
               aria-label={`File bukti ${i + 1}`}
               className="input py-2 text-sm"
               required
-              onChange={(e) => {
-                const file = e.target.files?.[0];
+              onChange={async (e) => {
+                const input = e.target;
+                const picked = input.files?.[0];
                 if (r.preview) URL.revokeObjectURL(r.preview);
+                const file = picked ? await shrinkImage(picked) : undefined;
+                if (file && file !== picked) {
+                  const dt = new DataTransfer();
+                  dt.items.add(file);
+                  input.files = dt.files;
+                }
                 patch(r.id, { name: file?.name ?? "", preview: file && file.type.startsWith("image/") ? URL.createObjectURL(file) : null });
               }}
             />

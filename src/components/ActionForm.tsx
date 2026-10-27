@@ -6,6 +6,10 @@ import { Notice } from "./ui";
 
 type Result = { ok?: string; error?: string } | null | undefined;
 
+// Vercel menolak kiriman di atas 4,5 MB sebelum sampai ke server, jadi diperiksa di sini dulu.
+const MAX_BODY = 4 * 1024 * 1024;
+const mb = (n: number) => (n / 1024 / 1024).toLocaleString("id-ID", { maximumFractionDigits: 1 });
+
 export function ActionForm({
   action,
   children,
@@ -15,7 +19,16 @@ export function ActionForm({
   children: React.ReactNode;
   className?: string;
 }) {
-  const [state, act, pending] = useActionState(action, null);
+  const [state, act, pending] = useActionState(async (prev: unknown, f: FormData): Promise<Result> => {
+    try {
+      return await action(prev, f);
+    } catch (e) {
+      // redirect() dari server action harus tetap diteruskan ke router.
+      if (String((e as { digest?: unknown })?.digest ?? "").startsWith("NEXT_REDIRECT")) throw e;
+      return { error: "Gagal menyimpan. Periksa koneksi lalu coba lagi. Jika masih gagal, kurangi jumlah atau ukuran file." };
+    }
+  }, null);
+  const [tooBig, setTooBig] = useState<string | null>(null);
   // Setelah berhasil, isi form dipasang ulang supaya baris dinamis (mis. bukti) ikut kosong.
   const [round, setRound] = useState(0);
   useEffect(() => {
@@ -28,14 +41,20 @@ export function ActionForm({
       onSubmit={(e) => {
         e.preventDefault();
         const data = new FormData(e.currentTarget);
+        const size = [...data.values()].reduce((n, v) => n + (v instanceof File ? v.size : 0), 0);
+        if (size > MAX_BODY) {
+          setTooBig(`Total file ${mb(size)} MB, maksimal ${mb(MAX_BODY)} MB sekali simpan. Simpan sebagian dulu, sisanya lewat "Tambah bukti".`);
+          return;
+        }
+        setTooBig(null);
         startTransition(() => act(data));
       }}
     >
       <PendingContext value={pending}>
         <Fragment key={round}>{children}</Fragment>
       </PendingContext>
-      {state?.error && <Notice kind="error">{state.error}</Notice>}
-      {state?.ok && <Notice kind="ok">{state.ok}</Notice>}
+      {tooBig ? <Notice kind="error">{tooBig}</Notice> : state?.error && <Notice kind="error">{state.error}</Notice>}
+      {!tooBig && state?.ok && <Notice kind="ok">{state.ok}</Notice>}
     </form>
   );
 }

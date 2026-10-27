@@ -121,6 +121,13 @@ export async function setPriority(id: string, priority: number) {
   refresh();
 }
 
+// Kolom `evidence` ditambahkan lewat migrasi manual; beri petunjuk jelas jika belum dijalankan.
+function dbError(e: unknown) {
+  const msg = (e as Error).message ?? String(e);
+  if (/evidence/i.test(msg)) return "Database belum punya kolom bukti. Jalankan SQL migrasi di CHANGELOG.md pada Supabase, lalu coba lagi.";
+  return `Gagal menyimpan ke database: ${msg}`;
+}
+
 /** Pasangan file + keterangan dari baris "Tambah bukti". Baris tanpa file dilewati. */
 async function evidenceFrom(f: FormData): Promise<{ list: Evidence[] } | { error: string }> {
   const files = f.getAll("evidence");
@@ -136,7 +143,11 @@ async function evidenceFrom(f: FormData): Promise<{ list: Evidence[] } | { error
     }
   }
   const list: Evidence[] = [];
-  for (const r of rows) list.push({ path: await uploadFile(BUCKET_PUBLIC, r.file!), caption: r.caption });
+  try {
+    for (const r of rows) list.push({ path: await uploadFile(BUCKET_PUBLIC, r.file!), caption: r.caption });
+  } catch (e) {
+    return { error: `Gagal mengunggah bukti: ${(e as Error).message}` };
+  }
   return { list };
 }
 
@@ -147,10 +158,14 @@ export async function addDisbursement(_: unknown, f: FormData) {
   if (!str(f, "statement")) return STATEMENT_ERROR;
   const ev = await evidenceFrom(f);
   if ("error" in ev) return ev;
-  await insert("disbursements", {
-    id: crypto.randomUUID(), campaign_id: str(f, "campaign_id"), date: str(f, "date", 10) || now().slice(0, 10),
-    purpose: str(f, "purpose", 300), amount, evidence_path: null, evidence: ev.list, created_at: now(),
-  });
+  try {
+    await insert("disbursements", {
+      id: crypto.randomUUID(), campaign_id: str(f, "campaign_id"), date: str(f, "date", 10) || now().slice(0, 10),
+      purpose: str(f, "purpose", 300), amount, evidence_path: null, evidence: ev.list, created_at: now(),
+    });
+  } catch (e) {
+    return { error: dbError(e) };
+  }
   refresh();
   return { ok: `Penyaluran dicatat${ev.list.length ? ` dengan ${ev.list.length} bukti` : ""} dan dibagi ke donasi secara urut masuk.` };
 }
@@ -163,7 +178,11 @@ export async function addEvidence(id: string, _: unknown, f: FormData) {
   const ev = await evidenceFrom(f);
   if ("error" in ev) return ev;
   if (ev.list.length === 0) return { error: "Pilih minimal satu file bukti." };
-  await update("disbursements", id, { evidence: [...(d.evidence ?? []), ...ev.list] });
+  try {
+    await update("disbursements", id, { evidence: [...(d.evidence ?? []), ...ev.list] });
+  } catch (e) {
+    return { error: dbError(e) };
+  }
   refresh();
   return { ok: `${ev.list.length} bukti ditambahkan.` };
 }
