@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { CopyButton } from "@/components/client";
 import { Progress } from "@/components/ui";
-import { all, BUCKET_PUBLIC, fileUrl, one } from "@/lib/db";
+import { all, BUCKET_PUBLIC, evidenceUrls, fileUrl, one } from "@/lib/db";
 import { rp, tgl } from "@/lib/format";
-import { allocate, getSettings, opsShare, STATUS_LABEL, viewStatus } from "@/lib/logic";
+import { allocate, evidenceOf, getSettings, opsShare, STATUS_LABEL, viewStatus } from "@/lib/logic";
 import { ProofForm } from "./ProofForm";
 
 export const metadata = { title: "Tiket donasi | dibersamai.id", robots: { index: false } };
@@ -46,7 +46,8 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
   const ops = opsShare(d, campaign ?? undefined);
   const net = d.total - ops;
   const given = allocs.reduce((a, x) => a + x.amount, 0);
-  const evidence = await Promise.all(allocs.map((a) => fileUrl(BUCKET_PUBLIC, a.disbursement.evidence_path)));
+  const evidence = await Promise.all(allocs.map((a) => evidenceUrls(evidenceOf(a.disbursement))));
+  const hasEvidence = evidence.some((list) => list.length > 0);
   const qris = settings.qris_image.startsWith("/") ? settings.qris_image : await fileUrl(BUCKET_PUBLIC, settings.qris_image);
 
   return (
@@ -128,14 +129,17 @@ export default async function TicketPage({ params, searchParams }: { params: Pro
               </ul>
             )}
           </Step>
-          <Step n={4} title="Bukti penyaluran" done={evidence.some(Boolean)}>
-            {evidence.some(Boolean) ? (
-              <ul className="mt-2 space-y-1">
-                {allocs.map((a, i) => evidence[i] && (
+          <Step n={4} title="Bukti penyaluran" done={hasEvidence}>
+            {hasEvidence ? (
+              <ul className="mt-2 space-y-3">
+                {allocs.map((a, i) => evidence[i].length > 0 && (
                   <li key={a.disbursement.id}>
-                    <a href={evidence[i]!} target="_blank" rel="noreferrer" className="font-semibold text-brand-2 underline underline-offset-4">
-                      Lihat bukti: {a.disbursement.purpose}
-                    </a>
+                    <p className="font-semibold text-ink">{a.disbursement.purpose}</p>
+                    {evidence[i].map((e, j) => e.url && (
+                      <a key={j} href={e.url} target="_blank" rel="noreferrer" className="block font-semibold text-brand-2 underline underline-offset-4">
+                        Lihat bukti{e.caption ? `: ${e.caption}` : evidence[i].length > 1 ? ` ${j + 1}` : ""}
+                      </a>
+                    ))}
                   </li>
                 ))}
               </ul>

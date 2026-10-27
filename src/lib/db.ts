@@ -1,7 +1,7 @@
 // Penyimpanan data. Tanpa kunci Supabase, app berjalan dalam mode demo (data contoh di memori).
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { seed } from "./seed";
-import type { Tables } from "./types";
+import type { Evidence, Tables } from "./types";
 
 type Name = keyof Tables;
 
@@ -87,6 +87,11 @@ export async function uploadFile(bucket: string, file: File): Promise<string> {
   const { error } = await sb().storage.from(bucket).upload(path, file, { contentType: file.type });
   if (error) throw new Error(`upload: ${error.message}`);
   return path;
+}
+
+/** Bukti penyaluran beserta URL publiknya. */
+export async function evidenceUrls(list: Evidence[]) {
+  return Promise.all(list.map(async (e) => ({ ...e, url: await fileUrl(BUCKET_PUBLIC, e.path) })));
 }
 
 export async function fileUrl(bucket: string, path: string | null): Promise<string | null> {

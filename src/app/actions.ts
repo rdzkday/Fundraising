@@ -5,13 +5,14 @@ import { redirect } from "next/navigation";
 import { login, logout, requireAdmin } from "@/lib/auth";
 import { all, BUCKET_PRIVATE, BUCKET_PUBLIC, insert, one, update, uploadFile, upsert } from "@/lib/db";
 import { EXPIRY_HOURS, newTicket, pickUniqueCode, viewStatus } from "@/lib/logic";
-import type { Campaign, Expense, Mutation, MutationCategory } from "@/lib/types";
+import type { Campaign, Evidence, Expense, Mutation, MutationCategory } from "@/lib/types";
 
 const now = () => new Date().toISOString();
 const str = (f: FormData, k: string, max = 500) => String(f.get(k) ?? "").trim().slice(0, max);
 const num = (f: FormData, k: string) => Math.round(Number(String(f.get(k) ?? "").replace(/\D/g, "")) || 0);
 const refresh = () => revalidatePath("/", "layout");
 const MAX_FILE = 5 * 1024 * 1024;
+const STATEMENT_ERROR = { error: "Centang pernyataan bahwa data diisi dengan sebenar-benarnya." };
 const fileOf = (f: FormData, k: string) => {
   const x = f.get(k);
   return x instanceof File && x.size > 0 ? x : null;
@@ -120,35 +121,51 @@ export async function setPriority(id: string, priority: number) {
   refresh();
 }
 
+/** Pasangan file + keterangan dari baris "Tambah bukti". Baris tanpa file dilewati. */
+async function evidenceFrom(f: FormData): Promise<{ list: Evidence[] } | { error: string }> {
+  const files = f.getAll("evidence");
+  const captions = f.getAll("caption").map((c) => String(c).trim().slice(0, 200));
+  const rows = files.map((x, i) => ({ file: x instanceof File && x.size > 0 ? x : null, caption: captions[i] ?? "" })).filter((r) => r.file);
+  if (rows.length > 10) return { error: "Maksimal 10 bukti sekali simpan." };
+  for (const r of rows) {
+    if (!r.caption) return { error: `Isi keterangan untuk ${r.file!.name}.` };
+    try {
+      checkFile(r.file!);
+    } catch (e) {
+      return { error: `${r.file!.name}: ${(e as Error).message}` };
+    }
+  }
+  const list: Evidence[] = [];
+  for (const r of rows) list.push({ path: await uploadFile(BUCKET_PUBLIC, r.file!), caption: r.caption });
+  return { list };
+}
+
 export async function addDisbursement(_: unknown, f: FormData) {
   await requireAdmin();
   const amount = num(f, "amount");
   if (!str(f, "campaign_id") || !str(f, "purpose") || amount <= 0) return { error: "Lengkapi campaign, tujuan, dan jumlah." };
-  const file = fileOf(f, "evidence");
-  let evidence_path: string | null = null;
-  if (file) {
-    try {
-      checkFile(file);
-    } catch (e) {
-      return { error: (e as Error).message };
-    }
-    evidence_path = await uploadFile(BUCKET_PUBLIC, file);
-  }
+  if (!str(f, "statement")) return STATEMENT_ERROR;
+  const ev = await evidenceFrom(f);
+  if ("error" in ev) return ev;
   await insert("disbursements", {
     id: crypto.randomUUID(), campaign_id: str(f, "campaign_id"), date: str(f, "date", 10) || now().slice(0, 10),
-    purpose: str(f, "purpose", 300), amount, evidence_path, created_at: now(),
+    purpose: str(f, "purpose", 300), amount, evidence_path: null, evidence: ev.list, created_at: now(),
   });
   refresh();
-  return { ok: "Penyaluran dicatat dan dibagi ke donasi secara urut masuk." };
+  return { ok: `Penyaluran dicatat${ev.list.length ? ` dengan ${ev.list.length} bukti` : ""} dan dibagi ke donasi secara urut masuk.` };
 }
 
-export async function addEvidence(id: string, f: FormData) {
+export async function addEvidence(id: string, _: unknown, f: FormData) {
   await requireAdmin();
-  const file = fileOf(f, "evidence");
-  if (!file) return;
-  checkFile(file);
-  await update("disbursements", id, { evidence_path: await uploadFile(BUCKET_PUBLIC, file) });
+  const d = await one("disbursements", "id", id);
+  if (!d) return { error: "Penyaluran tidak ditemukan." };
+  if (!str(f, "statement")) return STATEMENT_ERROR;
+  const ev = await evidenceFrom(f);
+  if ("error" in ev) return ev;
+  if (ev.list.length === 0) return { error: "Pilih minimal satu file bukti." };
+  await update("disbursements", id, { evidence: [...(d.evidence ?? []), ...ev.list] });
   refresh();
+  return { ok: `${ev.list.length} bukti ditambahkan.` };
 }
 
 export async function addExpense(_: unknown, f: FormData) {

@@ -48,8 +48,11 @@ create table if not exists disbursements (
   purpose text not null,
   amount bigint not null,
   evidence_path text,
+  evidence jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now()
 );
+-- Untuk database yang dibuat sebelum bukti bisa lebih dari satu.
+alter table disbursements add column if not exists evidence jsonb not null default '[]'::jsonb;
 
 create table if not exists expenses (
   id text primary key,

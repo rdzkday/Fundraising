@@ -139,10 +139,10 @@ export function seed() {
   });
 
   const disbursements: Disbursement[] = [
-    { id: "s-1", campaign_id: "c-gempa", date: day(8), purpose: "Honor psikolog untuk 12 sesi konseling individu", amount: 1_800_000, evidence_path: "/img/bukti-contoh.svg", created_at: ago(8) },
-    { id: "s-2", campaign_id: "c-karhutla", date: day(6), purpose: "Masker N95 untuk 300 warga Desa Tumbang", amount: 900_000, evidence_path: "/img/bukti-contoh.svg", created_at: ago(6) },
-    { id: "s-3", campaign_id: "c-banjir", date: day(4), purpose: "Perlengkapan trauma healing di 2 posko pengungsian", amount: 3_500_000, evidence_path: "/img/bukti-contoh.svg", created_at: ago(4) },
-    { id: "s-4", campaign_id: "c-demonstrasi", date: day(2), purpose: "Sewa ruang dan konselor untuk sesi kelompok", amount: 700_000, evidence_path: null, created_at: ago(2) },
+    { id: "s-1", campaign_id: "c-gempa", date: day(8), purpose: "Honor psikolog untuk 12 sesi konseling individu", amount: 1_800_000, evidence_path: null, evidence: [{ path: "/img/bukti-contoh.svg", caption: "Kuitansi honor psikolog" }, { path: "/img/bukti-contoh.svg", caption: "Dokumentasi sesi konseling" }], created_at: ago(8) },
+    { id: "s-2", campaign_id: "c-karhutla", date: day(6), purpose: "Masker N95 untuk 300 warga Desa Tumbang", amount: 900_000, evidence_path: null, evidence: [{ path: "/img/bukti-contoh.svg", caption: "Nota pembelian masker N95" }], created_at: ago(6) },
+    { id: "s-3", campaign_id: "c-banjir", date: day(4), purpose: "Perlengkapan trauma healing di 2 posko pengungsian", amount: 3_500_000, evidence_path: null, evidence: [{ path: "/img/bukti-contoh.svg", caption: "Daftar perlengkapan yang diserahkan" }], created_at: ago(4) },
+    { id: "s-4", campaign_id: "c-demonstrasi", date: day(2), purpose: "Sewa ruang dan konselor untuk sesi kelompok", amount: 700_000, evidence_path: null, evidence: [], created_at: ago(2) },
   ];
   const expenses: Expense[] = [
     { id: "e-1", campaign_id: "c-banjir", date: day(15), kind: "promosi", description: "Iklan media sosial campaign banjir", amount: 150_000, created_at: ago(15) },

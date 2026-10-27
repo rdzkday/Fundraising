@@ -74,3 +74,13 @@ export function Notice({ kind, children }: { kind: "ok" | "error"; children: Rea
     <p className={`rounded-xl px-4 py-3 text-sm font-semibold ${kind === "ok" ? "bg-lime-2 text-brand" : "bg-red-50 text-red-700"}`}>{children}</p>
   );
 }
+
+/** Pernyataan wajib dicentang sebelum admin mencatat data keuangan. Dikirim sebagai `statement`. */
+export function Statement({ className = "" }: { className?: string }) {
+  return (
+    <label className={`flex items-start gap-3 rounded-xl border border-line bg-mist/50 p-4 text-sm ${className}`}>
+      <input type="checkbox" name="statement" value="1" required className="mt-0.5 size-4 shrink-0 accent-brand" />
+      <span>Saya menyatakan bahwa pengisian data ini dilakukan dengan sebenar-benarnya dan dapat dipertanggungjawabkan secara hukum.</span>
+    </label>
+  );
+}

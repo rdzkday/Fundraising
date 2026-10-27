@@ -47,9 +47,13 @@ export type Disbursement = {
   date: string;
   purpose: string;
   amount: number;
+  /** Bukti lama (satu file). Bukti baru disimpan di `evidence`. */
   evidence_path: string | null;
+  evidence: Evidence[];
   created_at: string;
 };
+
+export type Evidence = { path: string; caption: string };
 
 export type Expense = {
   id: string;

@@ -1,7 +1,7 @@
 import { FlowStats } from "@/components/ui";
-import { BUCKET_PUBLIC, fileUrl } from "@/lib/db";
+import { evidenceUrls } from "@/lib/db";
 import { rp, tgl } from "@/lib/format";
-import { allocate, type Flow } from "@/lib/logic";
+import { allocate, evidenceOf, type Flow } from "@/lib/logic";
 import type { Campaign, Disbursement, Donation, Expense } from "@/lib/types";
 
 type Row = { date: string; at: string; label: string; detail?: string; in: number; out: number };
@@ -25,7 +25,7 @@ export async function ProjectFlow({
   const outs = disbursements.filter((d) => d.campaign_id === campaign.id).sort((a, b) => b.date.localeCompare(a.date));
   const costs = expenses.filter((e) => e.campaign_id === campaign.id);
   const verified = donations.filter((d) => d.campaign_id === campaign.id && d.status === "terverifikasi");
-  const evidence = await Promise.all(outs.map((o) => fileUrl(BUCKET_PUBLIC, o.evidence_path)));
+  const evidence = await Promise.all(outs.map((o) => evidenceUrls(evidenceOf(o))));
 
   // Berapa donatur yang ikut membiayai tiap pencairan (hasil pembagian urut masuk).
   const donorsPer = new Map<string, number>();
@@ -61,10 +61,12 @@ export async function ProjectFlow({
                 </div>
                 <div className="text-right">
                   <p className="font-bold">{rp(o.amount)}</p>
-                  {evidence[i] ? (
-                    <a href={evidence[i]!} target="_blank" rel="noreferrer" className="text-xs font-bold text-brand-2 underline">
-                      Lihat bukti
-                    </a>
+                  {evidence[i].length > 0 ? (
+                    evidence[i].map((e, j) => e.url && (
+                      <a key={j} href={e.url} target="_blank" rel="noreferrer" className="block text-xs font-bold text-brand-2 underline">
+                        {e.caption || (evidence[i].length > 1 ? `Lihat bukti ${j + 1}` : "Lihat bukti")}
+                      </a>
+                    ))
                   ) : (
                     <span className="text-xs text-warn">Bukti menyusul</span>
                   )}

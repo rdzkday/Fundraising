@@ -1,8 +1,15 @@
 import { all } from "./db";
 import { DEFAULT_WHITELIST } from "./seed";
-import type { Campaign, Disbursement, Donation, Expense, Settings } from "./types";
+import type { Campaign, Disbursement, Donation, Evidence, Expense, Settings } from "./types";
 
 export const EXPIRY_HOURS = 24;
+
+/** Semua bukti satu penyaluran, termasuk bukti lama dari kolom `evidence_path`. */
+export function evidenceOf(d: Disbursement): Evidence[] {
+  return [...(d.evidence_path ? [{ path: d.evidence_path, caption: "" }] : []), ...(d.evidence ?? [])];
+}
+
+export const isImage = (path: string) => /\.(png|jpe?g|webp|svg)$/i.test(path);
 
 export async function getSettings(): Promise<Settings> {
   const rows = Object.fromEntries((await all("settings")).map((r) => [r.id, r.value]));
